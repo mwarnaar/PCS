@@ -1,0 +1,26 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(void) {
+	double *cylinder;
+	int x, y, dimension_x, dimension_y;
+	
+	dimension_x = 5;
+	dimension_y = 5;
+
+	cylinder = (double *) malloc(dimension_x * dimension_y * sizeof(double));
+
+	for (x = 0; x < dimension_x; x++) {
+		for (y = 0; y < dimension_y; y++) {
+			cylinder[x * dimension_x + y] = 0;
+		}
+	}
+
+	for (x = 0; x < dimension_x; x++) {
+		for (y = 0; y < dimension_y; y++) {
+			printf("Cylinder[%f][%f] = %f\n", x, y, cylinder[x * dimension_x + y]);	
+		}
+	}
+
+	return 0;
+}
