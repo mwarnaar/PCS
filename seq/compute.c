@@ -7,8 +7,9 @@
 
 void do_compute(const struct parameters *p, struct results *r)
 {
-	int i, j, row, column;
+	int i, j, k, l,  row, column, niter = 0;
 	double tmin, tmax, tavg, maxdiff, time;
+	double tmin_temp, tmax_temp, tavg_temp, maxdiff_temp, time_temp;
 
 	double top_constants[p->M];
 	double bottom_constants[p->M];
@@ -36,6 +37,8 @@ void do_compute(const struct parameters *p, struct results *r)
 
 	for (i = 0; i < p->maxiter; i++) {
 		printf("Iteration %d\n", i + 1);
+
+		tmax = tmin = tavg = maxdiff = 0;
 
 		// Compute
 		for (row = 1; row <= p->N; row++) {
@@ -157,22 +160,37 @@ void do_compute(const struct parameters *p, struct results *r)
 
 				/* START CALCULATING NEIGHBOURS AVERAGE TEMPERATURE */
 
-				temperature_neighbours += (neigbhours[0] * diagonal_neighbour);
-				temperature_neighbours += (neigbhours[1] * direct_neighbour);
-				temperature_neighbours += (neigbhours[2] * diagonal_neighbour);
-				temperature_neighbours += (neigbhours[3] * direct_neighbour);
+				temperature_neighbours += (neighbours[0] * diagonal_neighbour);
+				temperature_neighbours += (neighbours[1] * direct_neighbour);
+				temperature_neighbours += (neighbours[2] * diagonal_neighbour);
+				temperature_neighbours += (neighbours[3] * direct_neighbour);
 
-				temperature_neighbours += (neigbhours[5] * direct_neighbour);
-				temperature_neighbours += (neigbhours[6] * diagonal_neighbour);
-				temperature_neighbours += (neigbhours[7] * direct_neighbour);
-				temperature_neighbours += (neigbhours[8] * diagonal_neighbour);
+				temperature_neighbours += (neighbours[5] * direct_neighbour);
+				temperature_neighbours += (neighbours[6] * diagonal_neighbour);
+				temperature_neighbours += (neighbours[7] * direct_neighbour);
+				temperature_neighbours += (neighbours[8] * diagonal_neighbour);
 
 				// New temperature = (conductivity * old temperature) + ((1 - conductivity) * neighbours temperature)
 				temperatures_new[(row - 1) * p->M + column - 1] = (conductivity[(row - 1) * p->M + column - 1] * temperatures_old[(row - 1) * p->M + column - 1]) + ((1 - conductivity[(row - 1) * p->M + column - 1]) * temperature_neighbours);
+
+				printf("Temperatures: %d, %d\n", temperatures_new[(row - 1) * p->M + column - 1], temperatures_old[(row - 1) * p->M + column - 1]);
+
+				// Increase iteration counter				
+				niter++;
 			}
+
+			for (k = 0; k < p->M; k++) {
+				for (l = 0; l < p->N; l++) {
+					tmin_temp = temperatures_new[k * p->M + l];
+
+					if (! tmin || tmin_temp < tmin) {
+						tmin = tmin_temp;
+					}
+				}
+			}	
 		}
 
-		r->niter = i;
+		r->niter = niter;
 		r->tmin = tmin;
 		r->tmax = tmax;
 		r->tavg = tavg;
@@ -183,5 +201,9 @@ void do_compute(const struct parameters *p, struct results *r)
 			printf("Report %d\n", i);
 			report_results(p, r);
 		}
+
+		printf("Minimum tempreatures %d\n", tmin);
+
+		memcpy(temperatures_old, temperatures_new, p->N * p->M * sizeof(double));
 	}
 }
