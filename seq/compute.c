@@ -51,136 +51,98 @@ void do_compute(const struct parameters *p, struct results *r)
 
 	for (i = 0; i < p->maxiter; i++) {
 		gettimeofday(&begin, NULL);
-		/*printf("Iteration %d\n", i + 1);*/
+
 		tavg = 0;
 		tmax = -99999;
 		tmin = 99999;
 		maxdiff = 0;
 
-		// Compute
+		/* Compute the new temperature of each point */
 		for (row = 0; row < p->N; row++) {
 			for (column = 0; column < p->M; column++) {
 				temperature_neighbours = 0;
 
 				neighbours[3][3];
 
-				/* TOP ROW */
-
+				/* Left-top neighbour */
 				if (row == 0 && column == 0) {
-					/*
-					   o | o | o
-					   o | s | i
-					   o | i | i
-					   */
-					   neighbours[0][0] = top_constants[p->M - 1];
-					   neighbours[0][1] = top_constants[column];
-					   neighbours[0][2] = top_constants[column + 1];
-					}
+					neighbours[0][0] = top_constants[p->M - 1];
+					neighbours[0][1] = top_constants[column];
+					neighbours[0][2] = top_constants[column + 1];
+				}
 
-					if (row == 0 && column > 0 && column < (p->M - 1)) {
-					/*
-					o | o | o
-					i | s | i
-					i | i | i
-					 */
+				/* Top neighbours (without corners) */
+				if (row == 0 && column > 0 && column < (p->M - 1)) {
 					neighbours[0][0] = top_constants[column - 1];
 					neighbours[0][1] = top_constants[column];
 					neighbours[0][2] = top_constants[column + 1];
 				}
 
+				/* Right-top neighbour */
 				if (row == 0 && column == (p->M - 1)) {
-					/*
-					o | o | o
-					i | s | o
-					i | i | o
-					 */
 					neighbours[0][0] = top_constants[column - 1];
 					neighbours[0][1] = top_constants[column];
 					neighbours[0][2] = top_constants[0];
 				}
 
-				/* BOTTOM ROW */
-
+				/* Left-bottom neighbour */
 				if (row == (p->N - 1) && column == 0) {
-					/*
-					   o | i | i
-					   o | s | i
-					   o | o | o
-					   */
-					   neighbours[2][0] = bottom_constants[p->M - 1];
-					   neighbours[2][1] = bottom_constants[column];
-					   neighbours[2][2] = bottom_constants[column + 1];
-					}
+					neighbours[2][0] = bottom_constants[p->M - 1];
+					neighbours[2][1] = bottom_constants[column];
+					neighbours[2][2] = bottom_constants[column + 1];
+				}
 
-					if (row == (p->N - 1) && column > 0 && column < (p->M - 1)) {
-					/*
-					i | i | i
-					i | s | i
-					o | o | o
-					 */
+				/* Bottom neighbours (without corners) */
+				if (row == (p->N - 1) && column > 0 && column < (p->M - 1)) {
 					neighbours[2][0] = bottom_constants[column - 1];
 					neighbours[2][1] = bottom_constants[column];
 					neighbours[2][3] = bottom_constants[column + 1];
 				}
 
+				/* Right-bottom neighbour */
 				if (row == (p->N - 1) && column == (p->M - 1)) {
-					/*
-					i | i | o
-					i | s | o
-					o | o | o
-					 */
 					neighbours[2][0] = bottom_constants[column - 1];
 					neighbours[2][1] = bottom_constants[column];
 					neighbours[2][2] = bottom_constants[0];
 				}
 
-				/*
- 				io | i | io
-				io | s | io
-				io | i | io
-				*/
+				/* Calculate all common neighbours (not in top or bottom row) */
 				for (j = 0; j < 3; j++) {
 					for (k = 0; k < 3; k++) {
-						if (neighbours[j][k]) {
-							/*printf("Neighbours at [%d, %d] (neighbour %d) is not empty\n", row, column, j);*/
-							continue;
-						}
+						if (neighbours[j][k]) continue;
 
 						if (column == 1) {
-							// If we have no direct left neighbours we take the right-most ones (cyclic)
+							/* If we have no direct left neighbours we take the right-most ones (cyclic) */
 							neighbours[0][0] = temperatures_old[row - 1][p->M - 1];
 							neighbours[1][0] = temperatures_old[row][p->M - 1];
 							neighbours[2][0] = temperatures_old[row + 1][p->M - 1];
 						} else {
-							// Otherwise we take the direct left neighbours
+							/* Otherwise we take the direct left neighbours */
 							neighbours[0][0] = temperatures_old[row - 1][column - 1];
 							neighbours[1][0] = temperatures_old[row][column - 1];
 							neighbours[2][0] = temperatures_old[row + 1][column - 1];
 						}
 
 						if (column == p->M) {
-							// If we have no direct right neighbours we take the left-most ones (cyclic)
+							/* If we have no direct right neighbours we take the left-most ones (cyclic) */
 							neighbours[0][2] = temperatures_old[row - 1][0];
 							neighbours[1][2] = temperatures_old[row][0];
 							neighbours[2][2] = temperatures_old[row + 1][0];
 						} else {
-							// Otherwise we take the direct right neighbours
+							/* Otherwise we take the direct right neighbours */
 							neighbours[0][2] = temperatures_old[row - 1][column + 1];
 							neighbours[1][2] = temperatures_old[row][column + 1];
 							neighbours[2][2] = temperatures_old[row + 1][column + 1];
 						}
 
-						neighbours[1][1] = 0; /* We are not self involved in the sum of the neighbours */
+						neighbours[1][1] = 0;
 
 						neighbours[0][1] = temperatures_old[row - 1][column];
 						neighbours[2][1] = temperatures_old[row + 1][column];
 					}
 				}
 
-				/* END CALCULATING NEIGHBOURS */
-
-				/* START CALCULATING NEIGHBOURS AVERAGE TEMPERATURE */
-
+				/* Calculate the average temperature of the neighbours */
 				temperature_neighbours += (neighbours[0][0] * diagonal_neighbour);
 				temperature_neighbours += (neighbours[0][1] * direct_neighbour);
 				temperature_neighbours += (neighbours[0][2] * diagonal_neighbour);
@@ -192,7 +154,7 @@ void do_compute(const struct parameters *p, struct results *r)
 				temperature_neighbours += (neighbours[2][1] * direct_neighbour);
 				temperature_neighbours += (neighbours[2][2] * diagonal_neighbour);
 
-				// New temperature = (conductivity * old temperature) + ((1 - conductivity) * neighbours temperature)
+				/* Calculate the new temperature for the current point using the conductivity */
 				temperatures_new[row][column] = (conductivity[row][column] * temperatures_old[row][column]) + ((1 - conductivity[row][column]) * temperature_neighbours);
 			}
 		}
