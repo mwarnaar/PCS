@@ -8,8 +8,8 @@
 void do_compute(const struct parameters *p, struct results *r)
 {
 	int i, j, k, l, row, column;
-	double tmin, tmax, tavg, maxdiff, maxdiff_temp, time;
-	struct timeval begin, end;
+	double tmin, tmax, tavg, maxdiff, maxdiff_temp, time, total_time;
+	struct timeval begin, end, total_begin, total_end;
 
 	double top_constants[p->M];
 	double bottom_constants[p->M];
@@ -27,6 +27,8 @@ void do_compute(const struct parameters *p, struct results *r)
 
 	double temperature_neighbours;
 
+	gettimeofday(&total_begin, NULL);
+
 	temperatures_old = malloc(p->N * p->M * sizeof(double));
 	temperatures_new = malloc(p->N * p->M * sizeof(double));
 	conductivity = malloc(p->N * p->M * sizeof(double));
@@ -34,40 +36,40 @@ void do_compute(const struct parameters *p, struct results *r)
 	memcpy(temperatures_old, p->tinit, p->N * p->M * sizeof(double));
 	memcpy(conductivity, p->conductivity, p->N * p->M * sizeof(double));
 
-	printf("Initial temps:\n");
+	/*printf("Initial temps:\n");
 	for (row = 1; row <= p->N; row++) {
 		for (column = 1; column <= p->M; column++) {
 			printf("Temperature [%d][%d] = %f\n", row - 1, column - 1, temperatures_old[(row - 1) * p->M + column]); 
 		}
 		
-	}
+	}*/
 
-	printf("Initial conductivity\n");
+	/*printf("Initial conductivity\n");
 	for (row = 1; row <= p->N; row++) {
 
 		for (column = 1; column <= p->M; column++) {
 			printf("Conductivity [%d][%d] = %f\n", row - 1, column - 1, p->conductivity[(row - 1) * p->M + column]);
 		}
-	}
+	}*/
 
-	for (i = 0; i < p->maxiter; i++) {
-		gettimeofday(&begin, NULL);
-		printf("Iteration %d\n", i + 1);
-		tavg = 0;
-		tmax = -99999;
-		tmin = 99999;
-		maxdiff = 0;
+		for (i = 0; i < p->maxiter; i++) {
+			gettimeofday(&begin, NULL);
+		/*printf("Iteration %d\n", i + 1);*/
+			tavg = 0;
+			tmax = -99999;
+			tmin = 99999;
+			maxdiff = 0;
 
 		// Compute
-		for (row = 1; row <= p->N; row++) {
-			for (column = 1; column <= p->M; column++) {
-				temperature_neighbours = 0;
+			for (row = 1; row <= p->N; row++) {
+				for (column = 1; column <= p->M; column++) {
+					temperature_neighbours = 0;
 
-				neighbours = malloc(3 * 3 * sizeof(double));
+					neighbours = malloc(3 * 3 * sizeof(double));
 
 				/* TOP ROW */
 
-				if (row == 1 && column == 1) {
+					if (row == 1 && column == 1) {
 					/*
 					   o | o | o
 					   o | s | i
@@ -194,12 +196,12 @@ void do_compute(const struct parameters *p, struct results *r)
 				// New temperature = (conductivity * old temperature) + ((1 - conductivity) * neighbours temperature)
 				temperatures_new[(row - 1) * p->M + column - 1] = (conductivity[(row - 1) * p->M + column - 1] * temperatures_old[(row - 1) * p->M + column - 1]) + ((1 - conductivity[(row - 1) * p->M + column - 1]) * temperature_neighbours);
 
-				printf("New temperature [%d][%d] = %f\n", row - 1, column - 1, temperatures_new[(row - 1) * p->M + column - 1]);
+				/*printf("New temperature [%d][%d] = %f\n", row - 1, column - 1, temperatures_new[(row - 1) * p->M + column - 1]);*/
 				free(neighbours);
 			}
 		}
 
-		/* Calculate average temperature */
+		/* Calculate results */
 		for (k = 0; k < p->M; k++) {
 			for (l = 0; l < p->N; l++) {
 				tavg += temperatures_new[k * p->M + l];
@@ -223,12 +225,10 @@ void do_compute(const struct parameters *p, struct results *r)
 		}
 		tavg = tavg / (p->M * p->N);
 
-			/*printf("Average temp this iteration: %f\n", tavg);*/
-
 		memcpy(temperatures_old, temperatures_new, p->N * p->M * sizeof(double));
 
 		gettimeofday(&end, NULL);
-		time = (double) (end.tv_usec - begin.tv_usec) / 1000000;
+		time = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0);
 		r->niter = i;
 		r->tmin = tmin;
 		r->tmax = tmax;
@@ -237,7 +237,10 @@ void do_compute(const struct parameters *p, struct results *r)
 		r->time = time;
 
 		if (i % p->period == 0) {
-				/*report_results(p, r);*/
+			report_results(p, r);
 		}
 	}
+	gettimeofday(&total_end, NULL);
+	total_time = (total_end.tv_sec - total_begin.tv_sec) + ((total_end.tv_usec - total_begin.tv_usec)/1000000.0);
+	printf("Total runtime: %f seconds\n", total_time);
 }
