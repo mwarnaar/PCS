@@ -11,12 +11,12 @@ void do_compute(const struct parameters *p, struct results *r)
 	double tmin, tmax, tavg, maxdiff, maxdiff_temp, time, total_time;
 	struct timeval begin, end, total_begin, total_end;
 
-	double top_constants[p->M];
-	double bottom_constants[p->M];
+	double temperatures_top[p->M];
+	double temperatures_bottom[p->M];
 
 	for (i = 0; i < p->M; i++) {
-		top_constants[i] = p->tinit[i];
-		bottom_constants[i] = p->tinit[(p->N - 1) * p->M + i];
+		temperatures_top[i] = p->tinit[i];
+		temperatures_bottom[i] = p->tinit[(p->N - 1) * p->M + i];
 	}
 
 	double direct_neighbour = (sqrt(2) / (sqrt(2) + 1)) / 4;
@@ -35,20 +35,6 @@ void do_compute(const struct parameters *p, struct results *r)
 	memcpy(temperatures_old, p->tinit, p->N * p->M * sizeof(double));
 	memcpy(conductivity, p->conductivity, p->N * p->M * sizeof(double));
 
-	// printf("Initial temps:\n");
-	// for (row = 0; row < p->N; row++) {
-	// 	for (column = 0; column < p->M; column++) {
-	// 		printf("Temperature [%d][%d] = %f\n", row, column, temperatures_old[row][column]);
-	// 	}
-	// }
-
-	// printf("Initial conductivity\n");
-	// for (row = 0; row < p->N; row++) {
-	// 	for (column = 0; column < p->M; column++) {
-	// 		printf("Conductivity [%d][%d] = %f\n", row, column, conductivity[row][column]);
-	// 	}
-	// }
-
 	for (i = 0; i < p->maxiter; i++) {
 		gettimeofday(&begin, NULL);
 
@@ -66,44 +52,44 @@ void do_compute(const struct parameters *p, struct results *r)
 
 				/* Left-top neighbour */
 				if (row == 0 && column == 0) {
-					neighbours[0][0] = top_constants[p->M - 1];
-					neighbours[0][1] = top_constants[column];
-					neighbours[0][2] = top_constants[column + 1];
+					neighbours[0][0] = temperatures_top[p->M - 1];
+					neighbours[0][1] = temperatures_top[column];
+					neighbours[0][2] = temperatures_top[column + 1];
 				}
 
 				/* Top neighbours (without corners) */
 				if (row == 0 && column > 0 && column < (p->M - 1)) {
-					neighbours[0][0] = top_constants[column - 1];
-					neighbours[0][1] = top_constants[column];
-					neighbours[0][2] = top_constants[column + 1];
+					neighbours[0][0] = temperatures_top[column - 1];
+					neighbours[0][1] = temperatures_top[column];
+					neighbours[0][2] = temperatures_top[column + 1];
 				}
 
 				/* Right-top neighbour */
 				if (row == 0 && column == (p->M - 1)) {
-					neighbours[0][0] = top_constants[column - 1];
-					neighbours[0][1] = top_constants[column];
-					neighbours[0][2] = top_constants[0];
+					neighbours[0][0] = temperatures_top[column - 1];
+					neighbours[0][1] = temperatures_top[column];
+					neighbours[0][2] = temperatures_top[0];
 				}
 
 				/* Left-bottom neighbour */
 				if (row == (p->N - 1) && column == 0) {
-					neighbours[2][0] = bottom_constants[p->M - 1];
-					neighbours[2][1] = bottom_constants[column];
-					neighbours[2][2] = bottom_constants[column + 1];
+					neighbours[2][0] = temperatures_bottom[p->M - 1];
+					neighbours[2][1] = temperatures_bottom[column];
+					neighbours[2][2] = temperatures_bottom[column + 1];
 				}
 
 				/* Bottom neighbours (without corners) */
 				if (row == (p->N - 1) && column > 0 && column < (p->M - 1)) {
-					neighbours[2][0] = bottom_constants[column - 1];
-					neighbours[2][1] = bottom_constants[column];
-					neighbours[2][2] = bottom_constants[column + 1];
+					neighbours[2][0] = temperatures_bottom[column - 1];
+					neighbours[2][1] = temperatures_bottom[column];
+					neighbours[2][2] = temperatures_bottom[column + 1];
 				}
 
 				/* Right-bottom neighbour */
 				if (row == (p->N - 1) && column == (p->M - 1)) {
-					neighbours[2][0] = bottom_constants[column - 1];
-					neighbours[2][1] = bottom_constants[column];
-					neighbours[2][2] = bottom_constants[0];
+					neighbours[2][0] = temperatures_bottom[column - 1];
+					neighbours[2][1] = temperatures_bottom[column];
+					neighbours[2][2] = temperatures_bottom[0];
 				}
 
 				/* Calculate all common neighbours (not in top or bottom row) */
