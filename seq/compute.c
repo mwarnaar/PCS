@@ -35,19 +35,19 @@ void do_compute(const struct parameters *p, struct results *r)
 	memcpy(temperatures_old, p->tinit, p->N * p->M * sizeof(double));
 	memcpy(conductivity, p->conductivity, p->N * p->M * sizeof(double));
 
-	printf("Initial temps:\n");
-	for (row = 0; row < p->N; row++) {
-		for (column = 0; column < p->M; column++) {
-			printf("Temperature [%d][%d] = %f\n", row, column, temperatures_old[row][column]);
-		}
-	}
+	// printf("Initial temps:\n");
+	// for (row = 0; row < p->N; row++) {
+	// 	for (column = 0; column < p->M; column++) {
+	// 		printf("Temperature [%d][%d] = %f\n", row, column, temperatures_old[row][column]);
+	// 	}
+	// }
 
-	printf("Initial conductivity\n");
-	for (row = 0; row < p->N; row++) {
-		for (column = 0; column < p->M; column++) {
-			printf("Conductivity [%d][%d] = %f\n", row, column, conductivity[row][column]);
-		}
-	}
+	// printf("Initial conductivity\n");
+	// for (row = 0; row < p->N; row++) {
+	// 	for (column = 0; column < p->M; column++) {
+	// 		printf("Conductivity [%d][%d] = %f\n", row, column, conductivity[row][column]);
+	// 	}
+	// }
 
 	for (i = 0; i < p->maxiter; i++) {
 		gettimeofday(&begin, NULL);
@@ -197,10 +197,16 @@ void do_compute(const struct parameters *p, struct results *r)
 		r->maxdiff = maxdiff;
 		r->time = time;
 
+		if (maxdiff < p->threshold) {
+			report_results(p, r);
+			break;
+		}
+
 		if (i % p->period == 0) {
 			report_results(p, r);
 		}
 	}
+
 	gettimeofday(&total_end, NULL);
 	total_time = (total_end.tv_sec - total_begin.tv_sec) + ((total_end.tv_usec - total_begin.tv_usec)/1000000.0);
 	printf("Total runtime: %f seconds\n", total_time);
