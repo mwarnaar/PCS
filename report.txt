@@ -1,6 +1,10 @@
 = Description of Implementation:
 We have 3 matrices of size N * M that contain the old temperatures, the new temperatures and the conductivities. Because the cylinder is cyclic into one direction we keep two arrays, namely the top temperatures and the bottom temperatures, so we can reference these temperatures when we calculate the new temperatures for the top and bottom rows. For each iteration we calculate for each point all eight neighbours. For the special cases (top and bottom row points), we set the right neighbour temperatures and than calculate the other neighbour temperatures. For every other point we can set all the neighbours straight away, we only need to check the first and last column to make sure the neighbours are set according to the cyclic behaviour of the cylinder. After we have set the neighbours, we multiply them by the given constants for their position (for direct and diagonal neighbours) and we calculate the sum of these values. Now we can calculate the new temperature for the current point and set it in the new temperatures array. We do this for every point on the matrix untill we have seen all points. After that we can calculate the minimum temperature, the maximum temperature, the maximum temperature difference and the average temperature. To calculate the running time of each iteration we use the gettimeofday function provided by C, setting it at the beginning of the iteration and substracting that from the initial value at the end of each iteration. We have used the C99 dynamic 2D array accessors, we have also tried the major-row order syntax (array[row * max_columns + column]), but that didn't seem to be much faster than the former. Using the 2D array accessors is a lot more readable, which makes it an overall better choice.
 
+= Performance measurement
+- For N = 500, M = 500, MAXITER = 2500 and THRESHOLD = 1.000000e-01:
+    > We didn't find any major performance gains when using other compiler flags (max 10%). The fastest running time was achieved using the '-O2' and '-ffast-math' flags, that took just under 33 seconds (32.80).
+
 
 gcc version 4.7.3 (Ubuntu/Linaro 4.7.3-1ubuntu1)
 
