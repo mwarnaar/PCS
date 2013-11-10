@@ -303,7 +303,7 @@ configure:3606: result: yes
 configure:3615: checking for library containing fabs
 configure:3646: gcc -std=gnu99 -o conftest -g -O2   conftest.c  >&5
 conftest.c:17:6: warning: conflicting types for built-in function 'fabs' [enabled by default]
-/tmp/ccia9FoK.o: In function `main':
+/tmp/cclHa2tL.o: In function `main':
 /media/psf/Home/Development/C/Programming Concurrent Systems/omp/conftest.c:21: undefined reference to `fabs'
 collect2: error: ld returned 1 exit status
 configure:3646: $? = 1
