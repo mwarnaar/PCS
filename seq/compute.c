@@ -53,8 +53,8 @@ void do_compute(const struct parameters *p, struct results *r)
 		gettimeofday(&begin, NULL);
 
 		tavg = 0;
-		tmax = -99999;
-		tmin = 99999;
+		tmin = INFINITY;
+		tmax = -INFINITY;
 		maxdiff = 0;
 
 		/* Compute the new temperature of each point */
@@ -62,7 +62,7 @@ void do_compute(const struct parameters *p, struct results *r)
 			for (column = 0; column < p->M; column++) {
 				temperature_neighbours = 0;
 
-				neighbours[3][3];
+				memset(neighbours, 0, sizeof(double[3][3]));
 
 				/* Left-top neighbour */
 				if (row == 0 && column == 0) {
@@ -96,7 +96,7 @@ void do_compute(const struct parameters *p, struct results *r)
 				if (row == (p->N - 1) && column > 0 && column < (p->M - 1)) {
 					neighbours[2][0] = bottom_constants[column - 1];
 					neighbours[2][1] = bottom_constants[column];
-					neighbours[2][3] = bottom_constants[column + 1];
+					neighbours[2][2] = bottom_constants[column + 1];
 				}
 
 				/* Right-bottom neighbour */
@@ -163,6 +163,7 @@ void do_compute(const struct parameters *p, struct results *r)
 		for (row = 0; row < p->M; row++) {
 			for (column = 0; column < p->N; column++) {
 				tavg += temperatures_new[row][column];
+
 				if (temperatures_new[row][column] > tmax) {
 					tmax = temperatures_new[row][column];
 				}
@@ -172,12 +173,13 @@ void do_compute(const struct parameters *p, struct results *r)
 				}
 
 				maxdiff_temp = temperatures_new[row][column] - temperatures_old[row][column];
+
 				if (maxdiff_temp < 0.0) {
 					maxdiff_temp = -maxdiff_temp;
 				}
 
 				if (maxdiff_temp > maxdiff) {
-					maxdiff = temperatures_new[row][column] - temperatures_old[row][column];
+					maxdiff = maxdiff_temp;
 				}
 			}
 		}
