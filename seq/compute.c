@@ -1,199 +1,151 @@
 #include <sys/time.h>
 #include <math.h>
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "compute.h"
 
-void do_compute(const struct parameters *p, struct results *r)
+#ifdef GEN_PICTURES
+static void do_draw(const struct parameters *p, size_t key, size_t height, size_t width, double (*restrict g)[height][width])
 {
-	int i, j, k, row, column;
-	double tmin, tmax, tavg, maxdiff, maxdiff_temp, time, total_time;
-	struct timeval begin, end, total_begin, total_end;
+    size_t i, j;
 
-	double temperatures_top[p->M];
-	double temperatures_bottom[p->M];
+    begin_picture(key, width - 2, height - 2, p->io_tmin, p->io_tmax);
 
-	for (i = 0; i < p->M; i++) {
-		temperatures_top[i] = p->tinit[i];
-		temperatures_bottom[i] = p->tinit[(p->N - 1) * p->M + i];
-	}
+    for (i = 1; i < height - 1; ++i)
+        for (j = 1; j < width - 1; ++j)
+            draw_point(j - 1, i - 1, (*g)[i][j]);
 
-	double direct_neighbour = (sqrt(2) / (sqrt(2) + 1)) / 4;
-	double diagonal_neighbour = (1 / (sqrt(2) + 1)) / 4;
+    end_picture();
+}
+#endif
 
-	double neighbours[3][3];
+static void do_copy(size_t height, size_t width, double (*restrict g)[height][width])
+{
+    size_t i;
 
-	double temperature_neighbours;
+    /* copy left and right column to opposite border */
+    for (i = 0; i < height; ++i) {
+        (*g)[i][width - 1] = (*g)[i][1];
+        (*g)[i][0] = (*g)[i][width - 2];
+    }
+}
 
-	gettimeofday(&total_begin, NULL);
+static void fill_report(const struct parameters *p, struct results *r, size_t height, size_t width, double (*a)[height][width], double maxdiff, double iter, struct timeval *before)
+{
+    /* compute min/max/avg */
+    double tmin = INFINITY, tmax = -INFINITY;
+    double sum = 0.0;
+    struct timeval after;
 
-	double temperatures_old[p->N][p->M];
-	double temperatures_new[p->N][p->M];
-	double conductivity[p->N][p->M];
+    for (size_t i = 1; i < h - 1; ++i) {
+        for (size_t j = 1; j < w - 1; ++j) {
+            double v = (*a)[i][j];
+            sum += v;
+            if (tmin > v) tmin = v;
+            if (tmax < v) tmax = v;
+        }
+    }
 
-	memcpy(temperatures_old, p->tinit, p->N * p->M * sizeof(double));
-	memcpy(conductivity, p->conductivity, p->N * p->M * sizeof(double));
+    r->niter = iter;
+    r->maxdiff = maxdiff;
+    r->tmin = tmin;
+    r->tmax = tmax;
+    r->tavg = sum / (p->N * p->M);
 
-	for (i = 0; i < p->maxiter; i++) {
-		gettimeofday(&begin, NULL);
+    gettimeofday(&after, NULL);
+    r->time = (double)(after.tv_sec - before->tv_sec) +
+        (double)(after.tv_usec - before->tv_usec) / 1e6;
+}
 
-		tavg = 0;
-		tmin = INFINITY;
-		tmax = -INFINITY;
-		maxdiff = 0;
+void do_compute(const struct parameters* p, struct results *r)
+{
+    size_t i, j;
 
-		/* Compute the new temperature of each point */
-		for (row = 0; row < p->N; row++) {
-			for (column = 0; column < p->M; column++) {
-				temperature_neighbours = 0;
+    /* alias input parameters */
+    const double (*restrict tinit)[p->N][p->M] = (const double (*)[p->N][p->M])p->tinit;
+    const double (*restrict cinit)[p->N][p->M] = (const double (*)[p->N][p->M])p->conductivity;
 
-				memset(neighbours, 0, sizeof(double[3][3]));
+    /* allocate grid data */
+    const size_t height = p->N + 2;
+    const size_t width = p->M + 2;
+    double (*restrict g1)[height][width] = malloc(h * w * sizeof(double));
+    double (*restrict g2)[height][width] = malloc(h * w * sizeof(double));
 
-				/* Left-top neighbour */
-				if (row == 0 && column == 0) {
-					neighbours[0][0] = temperatures_top[p->M - 1];
-					neighbours[0][1] = temperatures_top[column];
-					neighbours[0][2] = temperatures_top[column + 1];
-				}
+    /* allocate halo for conductivities */
+    double (*restrict c)[height][width] = malloc(h * w * sizeof(double));
 
-				/* Top neighbours (without corners) */
-				if (row == 0 && column > 0 && column < (p->M - 1)) {
-					neighbours[0][0] = temperatures_top[column - 1];
-					neighbours[0][1] = temperatures_top[column];
-					neighbours[0][2] = temperatures_top[column + 1];
-				}
+    struct timeval before;
+    gettimeofday(&before, NULL);
 
-				/* Right-top neighbour */
-				if (row == 0 && column == (p->M - 1)) {
-					neighbours[0][0] = temperatures_top[column - 1];
-					neighbours[0][1] = temperatures_top[column];
-					neighbours[0][2] = temperatures_top[0];
-				}
+    static const double c_cdir = 0.25 * M_SQRT2 / (M_SQRT2 + 1.0);
+    static const double c_cdiag = 0.25 / (M_SQRT2 + 1.0);
 
-				/* Left-bottom neighbour */
-				if (row == (p->N - 1) && column == 0) {
-					neighbours[2][0] = temperatures_bottom[p->M - 1];
-					neighbours[2][1] = temperatures_bottom[column];
-					neighbours[2][2] = temperatures_bottom[column + 1];
-				}
+    /* set initial temperatures and conductivities */
+    for (i = 1; i < h - 1; ++i)
+        for (j = 1; j < w - 1; ++j)
+        {
+            (*g1)[i][j] = (*tinit)[i-1][j-1];
+            (*c)[i][j] = (*cinit)[i-1][j-1];
+        }
 
-				/* Bottom neighbours (without corners) */
-				if (row == (p->N - 1) && column > 0 && column < (p->M - 1)) {
-					neighbours[2][0] = temperatures_bottom[column - 1];
-					neighbours[2][1] = temperatures_bottom[column];
-					neighbours[2][2] = temperatures_bottom[column + 1];
-				}
+    /* smear outermost row to border */
+    for (j = 1; j < w-1; ++j) {
+        (*g1)[0][j] = (*g2)[0][j] = (*g1)[1][j];
+        (*g1)[h-1][j] = (*g2)[h-1][j] = (*g1)[h-2][j];
+    }
 
-				/* Right-bottom neighbour */
-				if (row == (p->N - 1) && column == (p->M - 1)) {
-					neighbours[2][0] = temperatures_bottom[column - 1];
-					neighbours[2][1] = temperatures_bottom[column];
-					neighbours[2][2] = temperatures_bottom[0];
-				}
+    /* compute */
+    size_t iter;
+    double maxdiff = 0.0;
+    double (*restrict source)[height][width] = g2;
+    double (*restrict destination)[height][width] = g1;
 
-				/* Calculate all common neighbours (not in top or bottom row) */
-				for (j = 0; j < 3; j++) {
-					for (k = 0; k < 3; k++) {
-						if (neighbours[j][k]) continue;
+    for (iter = 1; iter <= p->maxiter; ++iter)
+    {
+#ifdef GEN_PICTURES
+        do_draw(p, iter, height, width, source);
+#endif
+        /* swap source and destination */
+        { void *tmp = source; source = destination; destination = tmp; }
 
-						if (column == 1) {
-							/* If we have no direct left neighbours we take the right-most ones (cyclic) */
-							neighbours[0][0] = temperatures_old[row - 1][p->M - 1];
-							neighbours[1][0] = temperatures_old[row][p->M - 1];
-							neighbours[2][0] = temperatures_old[row + 1][p->M - 1];
-						} else {
-							/* Otherwise we take the direct left neighbours */
-							neighbours[0][0] = temperatures_old[row - 1][column - 1];
-							neighbours[1][0] = temperatures_old[row][column - 1];
-							neighbours[2][0] = temperatures_old[row + 1][column - 1];
-						}
+        /* initialize halo on source */
+        do_copy(height, width, source);
 
-						if (column == p->M) {
-							/* If we have no direct right neighbours we take the left-most ones (cyclic) */
-							neighbours[0][2] = temperatures_old[row - 1][0];
-							neighbours[1][2] = temperatures_old[row][0];
-							neighbours[2][2] = temperatures_old[row + 1][0];
-						} else {
-							/* Otherwise we take the direct right neighbours */
-							neighbours[0][2] = temperatures_old[row - 1][column + 1];
-							neighbours[1][2] = temperatures_old[row][column + 1];
-							neighbours[2][2] = temperatures_old[row + 1][column + 1];
-						}
+        /* compute */
+        maxdiff = 0.0;
+        for (i = 1; i < h - 1; ++i) {
+            for (j = 1; j < w - 1; ++j) {
+                double w = (*c)[i][j];
+                double restw = 1.0 - w;
 
-						neighbours[1][1] = 0;
+                (*destination)[i][j] = w * (*source)[i][j] +
 
-						neighbours[0][1] = temperatures_old[row - 1][column];
-						neighbours[2][1] = temperatures_old[row + 1][column];
-					}
-				}
+                    ((*source)[i+1][j  ] + (*source)[i-1][j  ] +
+                     (*source)[i  ][j+1] + (*source)[i  ][j-1]) * (restw * c_cdir) +
 
-				/* Calculate the average temperature of the neighbours */
-				temperature_neighbours += (neighbours[0][0] * diagonal_neighbour);
-				temperature_neighbours += (neighbours[0][1] * direct_neighbour);
-				temperature_neighbours += (neighbours[0][2] * diagonal_neighbour);
+                    ((*source)[i-1][j-1] + (*source)[i-1][j+1] +
+                     (*source)[i+1][j-1] + (*source)[i+1][j+1]) * (restw * c_cdiag);
 
-				temperature_neighbours += (neighbours[1][0] * direct_neighbour);
-				temperature_neighbours += (neighbours[1][2] * direct_neighbour);
+                double diff = fabs((*source)[i][j] - (*destination)[i][j]);
+                if (diff > maxdiff)
+                    maxdiff = diff;
+            }
+        }
 
-				temperature_neighbours += (neighbours[2][0] * diagonal_neighbour);
-				temperature_neighbours += (neighbours[2][1] * direct_neighbour);
-				temperature_neighbours += (neighbours[2][2] * diagonal_neighbour);
+        /* check for convergence */
+        if (maxdiff < p->threshold)
+            { ++iter; break; }
 
-				/* Calculate the new temperature for the current point using the conductivity */
-				temperatures_new[row][column] = (conductivity[row][column] * temperatures_old[row][column]) + ((1 - conductivity[row][column]) * temperature_neighbours);
-			}
-		}
+        /* conditional reporting */
+        if (iter % p->period == 0) {
+            fill_report(p, r, height, width, destination, maxdiff, iter, &before);
+            report_results(p, r);
+        }
+    }
 
-		/* Calculate results */
-		for (row = 0; row < p->M; row++) {
-			for (column = 0; column < p->N; column++) {
-				tavg += temperatures_new[row][column];
+    /* report at end in all cases */
+    fill_report(p, r, height, width, destination, maxdiff, iter - 1, &before);
 
-				if (temperatures_new[row][column] > tmax) {
-					tmax = temperatures_new[row][column];
-				}
-
-				if (temperatures_new[row][column] < tmin) {
-					tmin = temperatures_new[row][column];
-				}
-
-				maxdiff_temp = temperatures_new[row][column] - temperatures_old[row][column];
-
-				if (maxdiff_temp < 0.0) {
-					maxdiff_temp = -maxdiff_temp;
-				}
-
-				if (maxdiff_temp > maxdiff) {
-					maxdiff = maxdiff_temp;
-				}
-			}
-		}
-
-		tavg = tavg / (p->M * p->N);
-
-		memcpy(temperatures_old, temperatures_new, p->N * p->M * sizeof(double));
-
-		gettimeofday(&end, NULL);
-		time = (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0);
-		r->niter = i;
-		r->tmin = tmin;
-		r->tmax = tmax;
-		r->tavg = tavg;
-		r->maxdiff = maxdiff;
-		r->time = time;
-
-		if (maxdiff < p->threshold) {
-			report_results(p, r);
-			break;
-		}
-
-		if (i % p->period == 0) {
-			report_results(p, r);
-		}
-	}
-
-	gettimeofday(&total_end, NULL);
-	total_time = (total_end.tv_sec - total_begin.tv_sec) + ((total_end.tv_usec - total_begin.tv_usec)/1000000.0);
-	printf("Total runtime: %f seconds\n", total_time);
+    free(c);
+    free(g2);
+    free(g1);
 }
