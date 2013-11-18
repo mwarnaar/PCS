@@ -1,0 +1,6 @@
+#!/bin/sh
+
+module load prun
+make
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n 500 -m 500 -i 5000 -k 1000 -e 0 -c ../pat1_500x500.pgm -t ../pat1_500x500.pgm -L -1.000000e+02 -H 1.000000e+02 -p 4
+
