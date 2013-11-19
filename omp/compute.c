@@ -84,21 +84,32 @@ void do_compute(const struct parameters* p, struct results *r)
 	/* set the correct amount of threads to be used by omp */
 	omp_set_num_threads(p->nthreads);
 
-	/* set initial temperatures and conductivities */
-	for (i = 1; i < height - 1; ++i) {
-		for (j = 1; j < width - 1; ++j) {
-			(*g1)[i][j] = (*tinit)[i - 1][j - 1];
-			(*c)[i][j] = (*cinit)[i - 1][j - 1];
+#pragma omp parallel
+	{
+#pragma omp sections
+		{
+#pragma omp section
+			{
+				/* set initial temperatures and conductivities */
+				for (i = 1; i < height - 1; ++i) {
+					for (j = 1; j < width - 1; ++j) {
+						(*g1)[i][j] = (*tinit)[i - 1][j - 1];
+						(*c)[i][j] = (*cinit)[i - 1][j - 1];
+					}
+				}
+			}
+
+#pragma omp section
+			{
+				/* smear outermost row to border */
+				for (j = 1; j < width - 1; ++j) {
+					(*g1)[0][j] = (*g2)[0][j] = (*g1)[1][j];
+					(*g1)[height - 1][j] = (*g2)[height - 1][j] = (*g1)[height - 2][j];
+				}
+			}
 		}
 	}
 
-	/* smear outermost row to border */
-	for (j = 1; j < width - 1; ++j) {
-		(*g1)[0][j] = (*g2)[0][j] = (*g1)[1][j];
-		(*g1)[height - 1][j] = (*g2)[height - 1][j] = (*g1)[height - 2][j];
-	}
-
-	printf("Amount of threads available in single: %d", omp_get_num_threads());
 	/* compute */
 	size_t iter;
 	double maxdiff = 0.0;
@@ -119,8 +130,11 @@ void do_compute(const struct parameters* p, struct results *r)
 		/* compute */
 		maxdiff = 0.0;
 
-#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i, j) \
+		reduction(max: maxdiff)
 		for (i = 1; i < height - 1; ++i) {
+			double temp_maxdiff = 0.0;
+
 			for (j = 1; j < width - 1; ++j) {
 				double width = (*c)[i][j];
 				double restw = 1.0 - width;
@@ -135,12 +149,13 @@ void do_compute(const struct parameters* p, struct results *r)
 
 				double diff = fabs((*source)[i][j] - (*destination)[i][j]);
 
-#pragma omp critical
-				{
-					if (diff > maxdiff) {
-						maxdiff = diff;
-					}
+				if (diff > temp_maxdiff) {
+					temp_maxdiff = diff;
 				}
+			}
+
+			if (temp_maxdiff > maxdiff) {
+				maxdiff = temp_maxdiff;
 			}
 		}
 

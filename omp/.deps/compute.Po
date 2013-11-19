@@ -9,18 +9,18 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
  /usr/include/bits/inf.h /usr/include/bits/nan.h \
  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
  /usr/include/bits/mathinline.h /usr/include/stdlib.h \
- /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h \
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
  /usr/include/endian.h /usr/include/bits/endian.h \
  /usr/include/bits/byteswap.h /usr/include/sys/types.h \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h /usr/include/stdio.h /usr/include/libio.h \
  /usr/include/_G_config.h /usr/include/wchar.h \
- /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stdarg.h \
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h ../src/compute.h ../src/input.h \
  ../src/output.h \
- /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/omp.h
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/omp.h
 
 /usr/include/sys/time.h:
 
@@ -68,7 +68,7 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
 
 /usr/include/stdlib.h:
 
-/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h:
+/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h:
 
 /usr/include/bits/waitflags.h:
 
@@ -96,7 +96,7 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
 
 /usr/include/wchar.h:
 
-/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stdarg.h:
+/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stdarg.h:
 
 /usr/include/bits/stdio_lim.h:
 
@@ -110,4 +110,4 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
 
 ../src/output.h:
 
-/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/omp.h:
+/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/omp.h:

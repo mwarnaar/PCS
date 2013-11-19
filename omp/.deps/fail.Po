@@ -5,10 +5,10 @@ fail.o: ../src/fail.c ../src/fail.h /usr/include/errno.h \
  /usr/include/linux/errno.h /usr/include/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/stdio.h \
- /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h \
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h \
  /usr/include/bits/types.h /usr/include/bits/typesizes.h \
  /usr/include/libio.h /usr/include/_G_config.h /usr/include/wchar.h \
- /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stdarg.h \
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h /usr/include/stdlib.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
@@ -45,7 +45,7 @@ fail.o: ../src/fail.c ../src/fail.h /usr/include/errno.h \
 
 /usr/include/stdio.h:
 
-/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h:
+/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h:
 
 /usr/include/bits/types.h:
 
@@ -57,7 +57,7 @@ fail.o: ../src/fail.c ../src/fail.h /usr/include/errno.h \
 
 /usr/include/wchar.h:
 
-/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stdarg.h:
+/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stdarg.h:
 
 /usr/include/bits/stdio_lim.h:
 
