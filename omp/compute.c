@@ -119,10 +119,8 @@ void do_compute(const struct parameters* p, struct results *r)
 		/* compute */
 		maxdiff = 0.0;
 
-		#pragma omp parallel for private(i, j)
+#pragma omp parallel for private(i, j)
 		for (i = 1; i < height - 1; ++i) {
-			double maxdiff = 0.0;
-
 			for (j = 1; j < width - 1; ++j) {
 				double width = (*c)[i][j];
 				double restw = 1.0 - width;
@@ -136,9 +134,12 @@ void do_compute(const struct parameters* p, struct results *r)
 					 (*source)[i+1][j-1] + (*source)[i+1][j+1]) * (restw * c_cdiag);
 
 				double diff = fabs((*source)[i][j] - (*destination)[i][j]);
-				
-				if (diff > maxdiff) {
-					maxdiff = diff;
+
+#pragma omp critical
+				{
+					if (diff > maxdiff) {
+						maxdiff = diff;
+					}
 				}
 			}
 		}

@@ -1,14 +1,14 @@
 #!/bin/sh
 
 cd ../
-make pat1_100x100.pgm
+make pat1_100x100.pgm > /dev/null
 cd seq/
-make
+make > /dev/null
 cd ../omp/
 
 module load prun
 
-make
+make > /dev/null
 prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ../seq/heat -n 100 -m 100 -i 5000 -k 1000 -e 0 -c ../pat1_100x100.pgm -t ../pat1_100x100.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
 prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n 100 -m 100 -i 5000 -k 1000 -e 0 -c ../pat1_100x100.pgm -t ../pat1_100x100.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
 prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n 100 -m 100 -i 5000 -k 1000 -e 0 -c ../pat1_100x100.pgm -t ../pat1_100x100.pgm -L -1.000000e+02 -H 1.000000e+02 -p 2
@@ -18,4 +18,4 @@ prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n 100 -m 100 -i 5000
 
 cd ../
 rm pat1_100x100.pgm
-make clean
+make clean > /dev/null
