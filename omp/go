@@ -2,7 +2,9 @@
 
 cd ../
 make pat1_100x100.pgm
-cd omp/
+cd seq/
+make
+cd ../omp/
 
 module load prun
 
