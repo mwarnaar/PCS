@@ -1,0 +1,31 @@
+#!/bin/sh
+
+module load prun
+
+make fibo1 fibo2 fibo3
+
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 10 1
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 10 2
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 10 4
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 10 8
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 10 16
+
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 20 1
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 20 2
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 20 4
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 20 8
+# prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 20 16
+
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 30 1
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 30 2
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 30 4
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 30 8
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 30 16
+
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 35 1
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 35 2
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 35 4
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 35 8
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo1 35 16
+
+make clean
