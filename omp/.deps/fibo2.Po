@@ -14,9 +14,7 @@ fibo2.o: fibo2.c /usr/include/stdio.h /usr/include/features.h \
  /usr/include/bits/sigset.h /usr/include/bits/time.h \
  /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h \
  /usr/include/alloca.h /usr/include/sys/time.h \
- /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/omp.h \
- vector.h vector.c /usr/include/string.h /usr/include/xlocale.h \
- /usr/include/bits/string.h /usr/include/bits/string2.h vector.h
+ /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/omp.h
 
 /usr/include/stdio.h:
 
@@ -83,17 +81,3 @@ fibo2.o: fibo2.c /usr/include/stdio.h /usr/include/features.h \
 /usr/include/sys/time.h:
 
 /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/omp.h:
-
-vector.h:
-
-vector.c:
-
-/usr/include/string.h:
-
-/usr/include/xlocale.h:
-
-/usr/include/bits/string.h:
-
-/usr/include/bits/string2.h:
-
-vector.h:

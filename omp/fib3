@@ -1,0 +1,12 @@
+#!/bin/sh
+
+module load prun
+
+make fibo3
+
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo3 1
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo3 2
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo3 4
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo3 8
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/fibo3 16
+

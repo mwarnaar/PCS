@@ -60,7 +60,7 @@ static void fill_report(const struct parameters *p, struct results *r, size_t he
 
 void do_compute(const struct parameters* p, struct results *r)
 {
-	size_t i, j;
+	size_t i, j, k;
 
 	/* alias input parameters */
 	const double (*restrict tinit)[p->N][p->M] = (const double (*)[p->N][p->M])p->tinit;
@@ -108,73 +108,87 @@ void do_compute(const struct parameters* p, struct results *r)
 				}
 			}
 		}
-	}
 
-	/* compute */
-	size_t iter;
-	double maxdiff = 0.0;
-	double (*restrict source)[height][width] = g2;
-	double (*restrict destination)[height][width] = g1;
+#pragma omp single
+		{
+			/* compute */
+			size_t iter;
+			double maxdiff = 0.0;
+			double (*restrict source)[height][width] = g2;
+			double (*restrict destination)[height][width] = g1;
 
-	for (iter = 1; iter <= p->maxiter; ++iter)
-	{
+			for (iter = 1; iter <= p->maxiter; ++iter)
+			{
 #ifdef GEN_PICTURES
-		do_draw(p, iter, height, width, source);
+				do_draw(p, iter, height, width, source);
 #endif
-		/* swap source and destination */
-		{ void *tmp = source; source = destination; destination = tmp; }
+				/* swap source and destination */
+				{ void *tmp = source; source = destination; destination = tmp; }
 
-		/* initialize halo on source */
-		do_copy(height, width, source);
+				/* initialize halo on source */
+				do_copy(height, width, source);
 
-		/* compute */
-		maxdiff = 0.0;
+				/* compute */
+				maxdiff = 0.0;
 
-#pragma omp parallel for private(i, j) \
-		reduction(max: maxdiff)
-		for (i = 1; i < height - 1; ++i) {
-			double temp_maxdiff = 0.0;
+				for (k = 1; k <= omp_get_max_threads(); ++k) {
+#pragma omp task private(i, j)
+					{
+						int offset = omp_get_num_threads() * (height / omp_get_max_threads());
 
-			for (j = 1; j < width - 1; ++j) {
-				double width = (*c)[i][j];
-				double restw = 1.0 - width;
+						for (i = 1; i < offset - 1; ++i) {
+							{
+								double temp_maxdiff = 0.0;
 
-				(*destination)[i][j] = width * (*source)[i][j] +
+								for (j = 1; j < width - 1; ++j) {
+									double width = (*c)[i][j];
+									double restw = 1.0 - width;
 
-					((*source)[i+1][j  ] + (*source)[i-1][j  ] +
-					 (*source)[i  ][j+1] + (*source)[i  ][j-1]) * (restw * c_cdir) +
+									(*destination)[i][j] = width * (*source)[i][j] +
 
-					((*source)[i-1][j-1] + (*source)[i-1][j+1] +
-					 (*source)[i+1][j-1] + (*source)[i+1][j+1]) * (restw * c_cdiag);
+										((*source)[i+1][j  ] + (*source)[i-1][j  ] +
+										 (*source)[i  ][j+1] + (*source)[i  ][j-1]) * (restw * c_cdir) +
 
-				double diff = fabs((*source)[i][j] - (*destination)[i][j]);
+										((*source)[i-1][j-1] + (*source)[i-1][j+1] +
+										 (*source)[i+1][j-1] + (*source)[i+1][j+1]) * (restw * c_cdiag);
 
-				if (diff > temp_maxdiff) {
-					temp_maxdiff = diff;
+									double diff = fabs((*source)[i][j] - (*destination)[i][j]);
+
+									if (diff > temp_maxdiff) {
+										temp_maxdiff = diff;
+									}
+								}
+#pragma omp critical 
+								{
+									if (temp_maxdiff > maxdiff) {
+										maxdiff = temp_maxdiff;
+									}
+								}
+							}
+						}
+
+						/* check for convergence */
+						if (maxdiff < p->threshold)
+						{ ++iter; break; }
+
+						/* conditional reporting */
+						if (iter % p->period == 0) {
+							fill_report(p, r, height, width, destination, maxdiff, iter, &before);
+							report_results(p, r);
+
+						}
+					}
 				}
 			}
 
-			if (temp_maxdiff > maxdiff) {
-				maxdiff = temp_maxdiff;
-			}
-		}
+			/* report at end in all cases */
+			fill_report(p, r, height, width, destination, maxdiff, iter - 1, &before);
 
-		/* check for convergence */
-		if (maxdiff < p->threshold)
-		{ ++iter; break; }
-
-		/* conditional reporting */
-		if (iter % p->period == 0) {
-			fill_report(p, r, height, width, destination, maxdiff, iter, &before);
-			report_results(p, r);
+			free(c);
+			free(g2);
+			free(g1);
 		}
 	}
-
-	/* report at end in all cases */
-	fill_report(p, r, height, width, destination, maxdiff, iter - 1, &before);
-
-	free(c);
-	free(g2);
-	free(g1);
 }
+
 
