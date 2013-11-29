@@ -1,0 +1,8 @@
+#!/bin/sh
+module load prun
+
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./example 99999999999 1024
+#prun -v -1 -np 1 ./example_seq 12000000 80
+#prun -v -1 -np 1 ./matmul_seq 1234567
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./matmul_omp 1234567 8
+prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 100
