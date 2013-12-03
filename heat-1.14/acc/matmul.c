@@ -20,18 +20,17 @@
 void matmul(float *a, float *b, float *x, int len){
 
 	/* Perform sequential multiplication */
-	int d = sqrt(len);
 	int sum = 0;
+	
+	for (int i = 0; i < len; i++) {
 
-	for (int i = 0; i < d; i++) {
+		for (int j = 0; j < len; j++) {
 
-		for (int j = 0; j < d; j++) {
-
-			for (int k = 0; k < d; k++) {
-				sum += a[i * d + k] * b[k * d + j];  
+			for (int k = 0; k < len; k++) {
+				sum += a[i * len + k] * b[k * len + j];  
 			}
 
-			x[i * d + j] = sum;
+			x[i * len + j] = sum;
 			sum = 0;
 		}
 
@@ -41,21 +40,20 @@ void matmul(float *a, float *b, float *x, int len){
 
 #ifdef MATMUL_ACC
 void matmul(float *a, float *b, float *x, int len){
-
-	int d = sqrt(len);
 	/* Perform parallel GPU threads computation */
-#pragma acc parallel copyin(a[0:len], b[0:len], d) copyout(x[0:len])
+	int lensq = len * len;
+#pragma acc parallel copyin(a[0:lensq], b[0:lensq], len) copyout(x[0:lensq]) num_gangs(480)
 	{
 #pragma acc loop gang
-		for (int i = 0; i < d; i++) {
+		for (int i = 0; i < len; i++) {
 #pragma acc loop worker
-			for (int j = 0; j < d; j++) {
+			for (int j = 0; j < len; j++) {
 				int sum = 0;
-				for (int k = 0; k < d; k++) {
-					sum += a[i * d + k] * b[k * d + j];  
+				for (int k = 0; k < len; k++) {
+					sum += a[i * len + k] * b[k * len + j];  
 				}
 
-				x[i * d + j] = sum;
+				x[i * len + j] = sum;
 			}
 		}  
 	}
@@ -65,20 +63,19 @@ void matmul(float *a, float *b, float *x, int len){
 #ifdef MATMUL_OMP
 void matmul(float *a, float *b, float *x, int len){
 	int i;
-
+	
 	/* Perform parallel CPU threads multiplication */
-	int d = sqrt(len);
 	int sum = 0;
 #pragma omp parallel for private(i)
-	for (int i = 0; i < d; i++) {
+	for (int i = 0; i < len; i++) {
 
-		for (int j = 0; j < d; j++) {
+		for (int j = 0; j < len; j++) {
 
-			for (int k = 0; k < d; k++) {
-				sum += a[i * d + k] * b[k * d + j];  
+			for (int k = 0; k < len; k++) {
+				sum += a[i * len + k] * b[k * len + j];  
 			}
 
-			x[i * d + j] = sum;
+			x[i * len + j] = sum;
 			sum = 0;
 		}
 
@@ -112,6 +109,9 @@ void do_compute(int n){
 	float *a = NULL, *b = NULL, *x = NULL;
 	struct timeval before, after;
 
+	size_t memsize =  3*(n*n*sizeof(float));
+  	printf("Try to allocate %llu * %llu * %llu = %llu bytes (%llu MB) of memory.\n", 3, n * n, sizeof(float), memsize, memsize/(1024*1024));
+
 	a = malloc(n * n * sizeof(float));
 	b = malloc(n * n * sizeof(float));
 	x = malloc(n * n * sizeof(float));
@@ -123,7 +123,6 @@ void do_compute(int n){
 	}
 
 	printf("\nInitialize...\n");
-	/* Initialize matrix */
 	
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
@@ -132,7 +131,6 @@ void do_compute(int n){
 			X(i, j) = 0;
 		} 
 	}
-
 
 	printf("Ready to compute...\n");
 
