@@ -1,1 +1,1 @@
-# dummy
+fibo2.o: fibo2.c

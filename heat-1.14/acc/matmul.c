@@ -15,26 +15,36 @@
 #include <omp.h>
 #endif
 
+int iterations_amount;
 
 #ifdef MATMUL_SEQ
 void matmul(float *a, float *b, float *x, int len){
 
 	/* Perform sequential multiplication */
 	int sum = 0;
-	
-	for (int i = 0; i < len; i++) {
 
-		for (int j = 0; j < len; j++) {
+	for (int counter = 0; counter < iterations_amount; counter++) {
 
-			for (int k = 0; k < len; k++) {
-				sum += a[i * len + k] * b[k * len + j];  
+		for (int i = 0; i < len; i++) {
+
+			for (int j = 0; j < len; j++) {
+				sum = 0;
+				for (int k = 0; k < len; k++) {
+					if (counter % 2 == 0) {
+						sum += a[i * len + k] * b[k * len + j];  
+					} else {
+						sum += x[i * len + k] * b[k * len + j];  
+					}
+				}
+
+				if (counter % 2 == 0) {
+					x[i * len + j] = sum;
+				} else {
+					a[i * len + j] = sum;
+				}
 			}
-
-			x[i * len + j] = sum;
-			sum = 0;
-		}
-
-	}  
+		}	
+	}
 }
 #endif
 
@@ -42,44 +52,64 @@ void matmul(float *a, float *b, float *x, int len){
 void matmul(float *a, float *b, float *x, int len){
 	/* Perform parallel GPU threads computation */
 	int lensq = len * len;
-#pragma acc parallel copyin(a[0:lensq], b[0:lensq], len) copyout(x[0:lensq]) num_gangs(480)
+#pragma acc data copyin(a[0:lensq], b[0:lensq], len) copyout(x[0:lensq])
 	{
-#pragma acc loop gang
-		for (int i = 0; i < len; i++) {
+		for (int counter = 0; counter < iterations_amount; counter++) {
+#pragma acc parallel loop gang num_gangs(480)
+			for (int i = 0; i < len; i++) {
 #pragma acc loop worker
-			for (int j = 0; j < len; j++) {
-				int sum = 0;
-				for (int k = 0; k < len; k++) {
-					sum += a[i * len + k] * b[k * len + j];  
-				}
+				for (int j = 0; j < len; j++) {
+					int sum = 0;
+					for (int k = 0; k < len; k++) {
+						if (counter % 2 == 0) {
+							sum += a[i * len + k] * b[k * len + j];  
+						} else {
+							sum += x[i * len + k] * b[k * len + j];  
+						}
+					}
 
-				x[i * len + j] = sum;
+					if (counter % 2 == 0) {
+						x[i * len + j] = sum;
+					} else {
+						a[i * len + j] = sum;
+					}
+
+				}  
 			}
-		}  
+		}
 	}
 }
 #endif
 
 #ifdef MATMUL_OMP
 void matmul(float *a, float *b, float *x, int len){
-	int i;
-	
 	/* Perform parallel CPU threads multiplication */
 	int sum = 0;
-#pragma omp parallel for private(i)
-	for (int i = 0; i < len; i++) {
+#pragma omp parallel
+	for (int counter = 0; counter < iterations_amount; counter++) {
+#pragma omp for
+		for (int i = 0; i < len; i++) {
 
-		for (int j = 0; j < len; j++) {
+			for (int j = 0; j < len; j++) {
 
-			for (int k = 0; k < len; k++) {
-				sum += a[i * len + k] * b[k * len + j];  
+				for (int k = 0; k < len; k++) {
+					sum = 0;
+					if (counter % 2 == 0){
+						sum += a[i * len + k] * b[k * len + j];  
+					} else {
+						sum += x[i * len + k] * b[k * len + j];  
+					}
+				}
+				if (counter % 2 == 0) {
+					x[i * len + j] = sum;
+				} else {
+					a[i * len + j] = sum;
+				}
+
+				sum = 0;
 			}
-
-			x[i * len + j] = sum;
-			sum = 0;
-		}
-
-	}  
+		}	
+	}
 }
 
 #endif
@@ -110,7 +140,7 @@ void do_compute(int n){
 	struct timeval before, after;
 
 	size_t memsize =  3*(n*n*sizeof(float));
-  	printf("Try to allocate %llu * %llu * %llu = %llu bytes (%llu MB) of memory.\n", 3, n * n, sizeof(float), memsize, memsize/(1024*1024));
+	printf("Try to allocate %llu * %llu * %llu = %llu bytes (%llu MB) of memory.\n", 3, n * n, sizeof(float), memsize, memsize/(1024*1024));
 
 	a = malloc(n * n * sizeof(float));
 	b = malloc(n * n * sizeof(float));
@@ -123,12 +153,12 @@ void do_compute(int n){
 	}
 
 	printf("\nInitialize...\n");
-	
+
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < n; j++) {
-			A(i, j) = i + j;
-			B(i, j) = i - j;
-			X(i, j) = 0;
+			A(i,j) = i + j;
+			B(i,j) = i - j;
+			X(i,j) = 0;
 		} 
 	}
 
@@ -164,10 +194,14 @@ int main(int argc, char **argv){
 	}
 	omp_set_num_threads(t);
 #endif
-
+	iterations_amount = 1;
+	if (argc > 3) {
+		iterations_amount = atoi(argv[3]);
+	}
+		
 	info();
 
-	printf("Multiply %dx%d matrices.\n", n, n);
+	printf("Multiply %dx%d matrices, %d iterations.\n", n, n, iterations_amount);
 
 	do_compute(n);
 

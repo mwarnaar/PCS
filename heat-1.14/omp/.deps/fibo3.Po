@@ -1,1 +1,1 @@
-# dummy
+fibo3.o: fibo3.c
