@@ -55,11 +55,11 @@ void matmul(float *a, float *b, float *x, int len){
 #pragma acc data copyin(a[0:lensq], b[0:lensq], len) copyout(x[0:lensq])
 	{
 		for (int counter = 0; counter < iterations_amount; counter++) {
-#pragma acc parallel loop gang num_gangs(480)
+#pragma acc parallel loop gang worker num_gangs(4096) num_workers(64) collapse(2)
 			for (int i = 0; i < len; i++) {
-#pragma acc loop worker
 				for (int j = 0; j < len; j++) {
 					int sum = 0;
+
 					for (int k = 0; k < len; k++) {
 						if (counter % 2 == 0) {
 							sum += a[i * len + k] * b[k * len + j];  
@@ -73,7 +73,6 @@ void matmul(float *a, float *b, float *x, int len){
 					} else {
 						a[i * len + j] = sum;
 					}
-
 				}  
 			}
 		}

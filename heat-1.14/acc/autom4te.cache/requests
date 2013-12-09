@@ -29,7 +29,6 @@
                         '/usr/share/aclocal-1.11/strip.m4',
                         '/usr/share/aclocal-1.11/substnot.m4',
                         '/usr/share/aclocal-1.11/tar.m4',
-                        'ax_openmp.m4',
                         'configure.ac'
                       ],
                       {
@@ -51,7 +50,6 @@
                         'AM_SILENT_RULES' => 1,
                         'include' => 1,
                         '_AM_PROG_TAR' => 1,
-                        'AX_OPENMP' => 1,
                         'AM_AUX_DIR_EXPAND' => 1,
                         'AM_DEP_TRACK' => 1,
                         '_AM_SET_OPTIONS' => 1,
