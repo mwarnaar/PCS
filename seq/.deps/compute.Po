@@ -9,7 +9,7 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
  /usr/include/bits/inf.h /usr/include/bits/nan.h \
  /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h \
  /usr/include/bits/mathinline.h /usr/include/stdlib.h \
- /home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h \
+ /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h \
  /usr/include/bits/waitflags.h /usr/include/bits/waitstatus.h \
  /usr/include/endian.h /usr/include/bits/endian.h \
  /usr/include/bits/byteswap.h /usr/include/sys/types.h \
@@ -62,7 +62,7 @@ compute.o: compute.c /usr/include/sys/time.h /usr/include/features.h \
 
 /usr/include/stdlib.h:
 
-/home/rdouma/gcc/ins/lib/gcc/x86_64-unknown-linux-gnu/4.8.2/include/stddef.h:
+/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h:
 
 /usr/include/bits/waitflags.h:
 

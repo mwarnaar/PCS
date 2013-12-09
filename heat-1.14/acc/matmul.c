@@ -55,7 +55,7 @@ void matmul(float *a, float *b, float *x, int len){
 #pragma acc data copyin(a[0:lensq], b[0:lensq], len) copyout(x[0:lensq])
 	{
 		for (int counter = 0; counter < iterations_amount; counter++) {
-#pragma acc parallel loop gang worker num_gangs(4096) num_workers(64) collapse(2)
+#pragma acc parallel loop gang worker num_gangs(4096) num_workers(32) collapse(2)
 			for (int i = 0; i < len; i++) {
 				for (int j = 0; j < len; j++) {
 					int sum = 0;
