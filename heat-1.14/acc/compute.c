@@ -110,8 +110,7 @@ void do_compute(const struct parameters* p, struct results *r)
 	int len = h*w;
 	double *src = (double*) g2;
 	double *dst = (double*) g1;
-#pragma acc data copyin(src[0:len], iter, h, w, c[0:len]) copyout(dst[0:len])
-	{
+/*#pragma acc data copyin(src[0:len], c[0:len], iter, h, w) copyout(dst[0:len])*/
 	for (iter = 1; iter <= p->maxiter; ++iter) {
 #ifdef GEN_PICTURES
 		do_draw(p, iter, h, w, len, src);
@@ -124,8 +123,11 @@ void do_compute(const struct parameters* p, struct results *r)
 
 		/* compute */
 		maxdiff = 0.0;
-#pragma acc parallel loop gang worker num_gangs(4096) num_workers(32) collapse(2)
+#pragma acc region copyin(src[0:len], c[0:len], iter) copyout(dst[0:len])
+		{
+#pragma acc for independent
 			for (int i = 1; i < h - 1; ++i) {
+#pragma acc for independent
 				for (int j = 1; j < w - 1; ++j) {
 					double normalw = c[i*w + j];
 					double restw = 1.0 - normalw;
@@ -143,6 +145,7 @@ void do_compute(const struct parameters* p, struct results *r)
 						maxdiff = diff;
 				}
 			}
+		}
 		/* check for convergence */
 		if (maxdiff < p->threshold) 
 		{ ++iter; break; }
@@ -152,13 +155,12 @@ void do_compute(const struct parameters* p, struct results *r)
 			fill_report(p, r, h, w, len, dst, maxdiff, iter, &before);
 			report_results(p, r);
 		}
-#pragma acc parallel loop gang worker
+
 		for (int i = 0; i < len; i++) {
 			src[i] = dst[i];
 		}
- 
+	/* end of iterations */
 		}
-	}
 	/* report at end in all cases */
 	fill_report(p, r, h, w, len, dst, maxdiff, iter-1, &before);
 	free(c);
