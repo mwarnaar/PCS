@@ -1,6 +1,6 @@
 #!/bin/sh
 module load prun
-make
+make -j
 
 THREADS=8
 
@@ -22,5 +22,5 @@ cd acc/
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 2500 $THREADS 10
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 5000 $THREADS 10
 
-prun -v -1 -np 1 -native '-l gpu=GTX480' ./heat_acc -n $2 -m $1 -i 100 -k 10 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1 
+prun -v -1 -np 1 -native '-l gpu=GTX480' ./heat_acc -n $2 -m $1 -i 10 -k 1 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1 
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 100 $THREADS 10 

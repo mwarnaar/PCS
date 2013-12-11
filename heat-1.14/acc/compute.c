@@ -76,8 +76,10 @@ void do_compute(const struct parameters* p, struct results *r)
 	double (*restrict g1)[h * w] = malloc(h * w * sizeof(double));
 	double (*restrict g2)[h * w] = malloc(h * w * sizeof(double));
 
+	double *restrict tmp = (double*) malloc(h * w * sizeof(double));
+
 	/* allocate halo for conductivities */
-	double* c = malloc(h * w * sizeof(double));
+	double *restrict c = (double*) malloc(h * w * sizeof(double));
 
 	struct timeval before;
 	gettimeofday(&before, NULL);
@@ -105,73 +107,80 @@ void do_compute(const struct parameters* p, struct results *r)
 	}
 
 	/* compute */
-	double diff = 0.0;
 	int len = h*w;
 	size_t iter;
-	double *src = (double *) g2;
+	double maxdiff = 0.0;
 	double *dst = (double *) g1;
-
-#pragma acc data copyin(src[0:len], dst[0:len], c[0:len], h, w) 
-{
-	const size_t height = h;
-	const size_t width = w;
-
-	for (size_t iter = 1; iter <= p->maxiter; ++iter) {
+	double *src = (double *) g2;
+#pragma acc data copyin(src[0:len], c[0:len], dst[0:len], tmp[0:len], maxdiff, h, w)
+	{
+		const size_t height = h;
+		const size_t width = w;
+		for (iter = 1; iter <= p->maxiter; ++iter) {
 #ifdef GEN_PICTURES
-		do_draw(p, iter, height, width, len, src);
+			do_draw(p, iter, h, w, len, src);
 #endif
-		/* initialize halo on source */
-		do_copy(height, width, len, src);
 
-		/* compute */
+			/* initialize halo on source */
+			do_copy(h, w, len, src);
+
+			/* compute */
 #pragma acc region
-		{
-#pragma acc loop gang worker collapse(2) reduction(max:diff) independent
-			for (int i = 1; i < height - 1; ++i) {
-				for (int j = 1; j < width - 1; ++j) {
-					double normalw = c[i*width + j];
-					double restw = 1.0 - normalw;
+			{
+#pragma acc loop gang worker collapse(2) reduction(max:maxdiff) independent
+				for (int i = 1; i < height - 1; ++i) {
+					double temp_maxdiff = 0.0;
+					for (int j = 1; j < width - 1; ++j) {
+						double c_factor = c[i*width + j];
+						double restw = 1.0 - c_factor;
 
-					dst[i*width + j] = normalw * src[i*width + j] + 
+						dst[i*width + j] = c_factor * src[i*width + j] + 
 
-						(src[(i+1)*width + j] + src[(i-1)*width + j] + 
-						 src[i*width + j + 1] + src[i*width + j - 1]) * (restw * c_cdir) +
+							(src[(i+1)*width + j] + src[(i-1)*width + j] + 
+							 src[i*width + j + 1] + src[i*width + j - 1]) * (restw * c_cdir) +
 
-						(src[(i-1)*width + j - 1] + src[(i-1)*width + j + 1] + 
-						 src[(i+1)*width + j - 1] + src[(i+1)*width + j + 1]) * (restw * c_cdiag);
+							(src[(i-1)*width + j - 1] + src[(i-1)*width + j + 1] + 
+							 src[(i+1)*width + j - 1] + src[(i+1)*width + j + 1]) * (restw * c_cdiag);
 
-					diff = fabs(src[i*width + j] - dst[i*width + j]);
+						double diff = fabs(src[i*width + j] - dst[i*width + j]);
+						if (diff > temp_maxdiff)
+							temp_maxdiff = diff;
+					}
+					if (temp_maxdiff > maxdiff)
+						maxdiff = temp_maxdiff;
+				}
+
+			/* swap source and destination */
+#pragma acc loop gang independent	
+				for (int i = 0; i < len; ++i) {
+					tmp[i] = src[i];
+					src[i] = dst[i];
+					dst[i] = tmp[i];			
 				}
 			}
+#pragma acc update host(maxdiff)
 
-			#pragma acc loop gang independent
-			for (int i = 0; i < len; ++i) {
-				src[i] = dst[i];
+			/* check for convergence */
+			if (maxdiff < p->threshold) { 
+/*#pragma acc update host(dst[0:len])*/
+				++iter; 
+				break; 
+			}
+
+			/* conditional reporting */
+			if (iter % p->period == 0) {
+#pragma acc update host(maxdiff, dst[0:len])
+				fill_report(p, r, height, width, len, dst, maxdiff, iter, &before);
+				report_results(p, r);
 			}
 		}
 
-#pragma acc update host(diff)
-
-		/* check for convergence */
-		if (diff < p->threshold) { 
-#pragma acc update host(dst[0:len])
-			++iter; 
-			break; 
-		}
-
-		/* conditional reporting */
-		if (iter % p->period == 0) {
-#pragma acc update host(dst[0:len])
-			fill_report(p, r, height, width, len, dst, diff, iter, &before);
-			report_results(p, r);
-		}
+		/* report at end in all cases */
+		fill_report(p, r, height, width, len, dst, maxdiff, iter-1, &before);
+	/* end of data block */
 	}
-
-	/* report at end in all cases */
-	fill_report(p, r, h, w, len, dst, diff, iter-1, &before);
-}
-
 	free(c);
-	free(g2);
 	free(g1);
+	free(g2);
+	free(tmp);
 }
