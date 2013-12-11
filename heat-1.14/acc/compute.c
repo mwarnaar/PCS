@@ -105,64 +105,72 @@ void do_compute(const struct parameters* p, struct results *r)
 	}
 
 	/* compute */
-	size_t iter;
-	double maxdiff = 0.0;
+	double diff = 0.0;
 	int len = h*w;
-	double *src = (double*) g2;
-	double *dst = (double*) g1;
-/*#pragma acc data copyin(src[0:len], c[0:len], iter, h, w) copyout(dst[0:len])*/
-	for (iter = 1; iter <= p->maxiter; ++iter) {
-#ifdef GEN_PICTURES
-		do_draw(p, iter, h, w, len, src);
-#endif
-		/* swap source and destination */
-		/*{ void *tmp = src; src = dst; dst = tmp; } */
+	size_t iter;
+	double *src = (double *) g2;
+	double *dst = (double *) g1;
 
+#pragma acc data copyin(src[0:len], dst[0:len], c[0:len], h, w) 
+{
+	const size_t height = h;
+	const size_t width = w;
+
+	for (size_t iter = 1; iter <= p->maxiter; ++iter) {
+#ifdef GEN_PICTURES
+		do_draw(p, iter, height, width, len, src);
+#endif
 		/* initialize halo on source */
-		do_copy(h, w, len, src);
+		do_copy(height, width, len, src);
 
 		/* compute */
-		maxdiff = 0.0;
-#pragma acc region copyin(src[0:len], c[0:len], iter) copyout(dst[0:len])
+#pragma acc region
 		{
-#pragma acc for independent
-			for (int i = 1; i < h - 1; ++i) {
-#pragma acc for independent
-				for (int j = 1; j < w - 1; ++j) {
-					double normalw = c[i*w + j];
+#pragma acc loop gang worker collapse(2) reduction(max:diff) independent
+			for (int i = 1; i < height - 1; ++i) {
+				for (int j = 1; j < width - 1; ++j) {
+					double normalw = c[i*width + j];
 					double restw = 1.0 - normalw;
 
-					dst[i*w + j] = normalw * src[i*w + j] + 
+					dst[i*width + j] = normalw * src[i*width + j] + 
 
-						(src[(i+1)*w + j] + src[(i-1)*w + j] + 
-						 src[i*w + j + 1] + src[i*w + j - 1]) * (restw * c_cdir) +
+						(src[(i+1)*width + j] + src[(i-1)*width + j] + 
+						 src[i*width + j + 1] + src[i*width + j - 1]) * (restw * c_cdir) +
 
-						(src[(i-1)*w + j - 1] + src[(i-1)*w + j + 1] + 
-						 src[(i+1)*w + j - 1] + src[(i+1)*w + j + 1]) * (restw * c_cdiag);
+						(src[(i-1)*width + j - 1] + src[(i-1)*width + j + 1] + 
+						 src[(i+1)*width + j - 1] + src[(i+1)*width + j + 1]) * (restw * c_cdiag);
 
-					double diff = fabs(src[i*w + j] - dst[i*w + j]);
-					if (diff > maxdiff)
-						maxdiff = diff;
+					diff = fabs(src[i*width + j] - dst[i*width + j]);
 				}
 			}
+
+			#pragma acc loop gang independent
+			for (int i = 0; i < len; ++i) {
+				src[i] = dst[i];
+			}
 		}
+
+#pragma acc update host(diff)
+
 		/* check for convergence */
-		if (maxdiff < p->threshold) 
-		{ ++iter; break; }
+		if (diff < p->threshold) { 
+#pragma acc update host(dst[0:len])
+			++iter; 
+			break; 
+		}
 
 		/* conditional reporting */
 		if (iter % p->period == 0) {
-			fill_report(p, r, h, w, len, dst, maxdiff, iter, &before);
+#pragma acc update host(dst[0:len])
+			fill_report(p, r, height, width, len, dst, diff, iter, &before);
 			report_results(p, r);
 		}
+	}
 
-		for (int i = 0; i < len; i++) {
-			src[i] = dst[i];
-		}
-	/* end of iterations */
-		}
 	/* report at end in all cases */
-	fill_report(p, r, h, w, len, dst, maxdiff, iter-1, &before);
+	fill_report(p, r, h, w, len, dst, diff, iter-1, &before);
+}
+
 	free(c);
 	free(g2);
 	free(g1);
