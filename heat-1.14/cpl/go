@@ -4,9 +4,9 @@ make -j
 
 THREADS=8
 
-#cd ../
-#make pat1_$1x$2.pgm > /dev/null
-#cd acc/
+cd ../
+make pat1_$1x$2.pgm > /dev/null
+cd acc/
 
 #prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./example 99999999999 1024
 #prun -v -1 -np 1 ./example_seq 12000000 80
@@ -22,5 +22,5 @@ THREADS=8
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 2500 $THREADS 10
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 5000 $THREADS 10
 
-prun -v -1 -np 1 ./heat
+prun -v -1 -np 1 ./heat_acc
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 100 $THREADS 10 

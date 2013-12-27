@@ -2,16 +2,16 @@
 const FPOPS_PER_POINT_PER_ITERATION = 12;
 
 record params {
-    var N : int;
-    var M : int;
-    var maxiter : int;
-    var period : int;
-    var threshold : real;
-    var io_tmin : real;
-    var io_tmax : real;
-    var nthreads : int;
-    var tinit;
-    var tcond;
+    const N : int;
+    const M : int;
+    const maxiter : int;
+    const period : int;
+    const threshold : real;
+    const io_tmin : real;
+    const io_tmax : real;
+    const nthreads : int;
+    const tinit;
+    const tcond;
 }
 
 record results {
@@ -25,19 +25,24 @@ record results {
 
 proc print_header(){ 
     writeln("Output from heat-1.15 (pcs2013@list.uva.nl):\n\n",
-               "Iterations",
-               "T(min)     ", "T(max)     ", "T(diff)    ", "T(avg)     ", "Time      ", "FLOP/s    ");
+               "   Iterations",
+               "        T(min)", 
+               "        T(max)", 
+               "       T(diff)", 
+               "        T(avg)", 
+               "          Time",
+               "        FLOP/s");
 }
 
-proc report_results(p : params, r : results) {
-
-    writeln(r.niter, " ",
-            r.tmin, " ",
-            r.tmax, " ",
-            r.maxdiff, " ",
-            r.tavg, " ",
-            r.time, " ",
-            p.N:real * p.M:real * 
-            (r.niter:real * FPOPS_PER_POINT_PER_ITERATION +
-                    r.niter:real / p.period:real) / r.time);
+proc report_results(p : params, r : results) 
+{
+    writeln(format("%-13zu ", r.niter), 
+            format("% .6e " , r.tmin),
+            format("% .6e " , r.tmax),
+            format("% .6e " , r.maxdiff),
+            format("% .6e " , r.tavg),
+            format("% .6e " , r.time),
+            format("% .6e" , p.N:real * p.M:real * 
+                             (r.niter:real * FPOPS_PER_POINT_PER_ITERATION +
+                              r.niter:real / p.period:real) / r.time));
 }
