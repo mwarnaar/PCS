@@ -40,7 +40,7 @@ proc readpgm(fname, height, width, min, max)
     var (w,h) = f.readln(int, int);
     var maxv = f.readln(int);
 
-    var im : [1..w, 1..w] real;
+    var im : [1..h, 1..w] real;
 
     for i in 1..h {
         for j in 1..w {
