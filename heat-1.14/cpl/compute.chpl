@@ -38,13 +38,11 @@ proc do_compute(p : params)
 		srcMatrix(height-1, w) = dstMatrix(height-1, w);
 	}
 
-	/* Real default value is 0.0 */
-	var maxdiff : real;
-
+	var maxdiff : real = 0.0;
 	/* Compute */
 	for i in 1..p.maxiter {
 
-		/* Copy left and righit column to opposite border */
+		/* Copy left and right column to opposite border */
 		for i in 0..height {
 			srcMatrix[i, width-1] = srcMatrix[i,1];
 			srcMatrix[i, 0] = srcMatrix[i, width-2];
@@ -54,18 +52,18 @@ proc do_compute(p : params)
 
 		for i in 1..height-1 {
 			for j in 1..width-1 {
-				var width : real = cndMatrix[i, j];
-				var restw : real = 1.0 - width;
+				var width = cndMatrix[i, j];
+				var restw = 1.0 - width;
 
 				dstMatrix[i, j] = width * srcMatrix[i, j] +
-					(srcMatrix[i+1,j] + srcMatrix[i-1, j] +
-					 srcMatrix[i,j] + srcMatrix[i, j-1]) * (restw * c_cdir) +
 
+					(srcMatrix[i+1, j] + srcMatrix[i-1, j] +
+					 srcMatrix[i, j+1] + srcMatrix[i, j-1]) * (restw * c_cdir) +
 					(srcMatrix[i-1, j-1] + srcMatrix[i-1, j+1] +
 					 srcMatrix[i+1, j-1] + srcMatrix[i+1, j+1]) * (restw*c_cdiag);
 
 				/* Take absolute value of all differences in the two matrices */
-				var diff: real = srcMatrix[i, j] - dstMatrix[i, j];
+				var diff = srcMatrix[i, j] - dstMatrix[i, j];
 				if (diff < 0) {
 					diff = -diff;
 				}
@@ -74,7 +72,7 @@ proc do_compute(p : params)
 				}
 			}
 		}
-
+		
 		/* Check for convergence */
 		if (maxdiff < p.threshold) {
 			i = i+1;
@@ -84,23 +82,23 @@ proc do_compute(p : params)
 		/* Conditional reporting */
 		if (i % p.period == 0) {
 			/* Fill report */
-			var tmin: real =  9e10;
-			var tmax: real = -9e10;
-			var sum:  real;
+			var tmin: real =  INFINITY;
+			var tmax: real = -INFINITY;
+			var sum:  real = 0.0;
 
 			for i in 1..height {
 				for j in 1..width {
 					var v: real = dstMatrix[i, j];
 					sum += v;
-					if (tmin > v) {
+					if (v < tmin) {
 						tmin = v;
 					}
-					if (tmax < v) {
+					if (v > tmax) {
 						tmax = v;
 					}
 				}	
 			}
-
+			
 			r.niter = i;
 			r.maxdiff = maxdiff;
 			r.tmin = tmin;
@@ -113,7 +111,7 @@ proc do_compute(p : params)
 		/* Copy dst to src */
 		for i in 1..height {
 			for j in 1..width {
-				srcMatrix = dstMatrix[i, j];
+				srcMatrix[i, j] = dstMatrix[i, j];
 			}
 		}
 	}

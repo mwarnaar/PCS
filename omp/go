@@ -9,12 +9,12 @@ cd ../omp/
 module load prun
 
 make > /dev/null
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ../seq/heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 2
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 4
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 8
-prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 16
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ../seq/heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 1
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 2
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 4
+prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 50 -k 10 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 8
+#prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./heat -n $2 -m $1 -i 5000 -k 1000 -e 0 -c ../pat1_$1x$2.pgm -t ../pat1_$1x$2.pgm -L -1.000000e+02 -H 1.000000e+02 -p 16
 
 cd ../
 rm pat1_$1x$2.pgm
