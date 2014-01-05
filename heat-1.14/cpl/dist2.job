@@ -1,0 +1,18 @@
+#!/bin/bash
+#$ -pe openmpi 16
+#$ -l h_rt=0:15:00
+#$ -N HEAT1
+#$ -cwd
+
+APP=./heat_multi
+ARGS="-sGc ../pat1_100x100.pgm -sGt ../pat1_100x100.pgm -sGn 100 -sGm 100 -sGi 5000 -sGk 1000 -sGe 0 -sGp 8"
+#ARGS="--n 100"
+ARGS_LOCALES="-nl 2"
+
+# Get OpenMPI settings
+. /etc/bashrc
+
+SSH_SERVERS=`uniq $TMPDIR/machines  | tr '\n' ' '`
+PATH=/usr/bin:$PATH
+
+CHPL_COMM=gasnet SSH_SERVERS="$SSH_SERVERS" $APP $ARGS $ARGS_LOCALES

@@ -1,12 +1,12 @@
 #!/bin/sh
 module load prun
-make -j
+make heat
 
 THREADS=8
-
-#cd ../
-#make pat1_$1x$2.pgm > /dev/null
-#cd acc/
+THRESHOLD=0.0
+cd ../
+make pat1_$1x$2.pgm > /dev/null
+cd cpl/
 
 #prun -v -1 -np 1 -sge-script $PRUN_ETC/prun-openmpi ./example 99999999999 1024
 #prun -v -1 -np 1 ./example_seq 12000000 80
@@ -23,5 +23,7 @@ THREADS=8
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 5000 $THREADS 10
 
 #prun -v -1 -np 1 ./example_chpl --n=$1 --verbose=$2
-prun -v -1 -np 1 ./heat --Gc=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_150x100.pgm --Gt=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_150x100.pgm --Gi=10 --Gk=1
+#prun -v -1 -np 1 ./heat --Gc=/home/mwr750/PCS2/heat-1.14/pat1_$1x$2.pgm --Gn=$2 --Gm=$1 --Gt=/home/mwr750/PCS2/heat-1.14/pat1_$1x$2.pgm --Gi=5000 --Gk=1000 --Ge=$THRESHOLD
+#prun -v -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/heat -sGc ../pat1_$1x$2.pgm -sGt ../pat1_$1x$2.pgm -sGn $2 -sGm $1 -sGi 1000 -sGk 1000
+prun -v -np 1 -sge-script $PRUN_ETC/prun-openmpi `pwd`/heat -sGc ../pat1_$1x$2.pgm -sGt ../pat1_$1x$2.pgm -sGn $2 -sGm $1 -sGi 1000 -sGk 100
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 100 $THREADS 10 

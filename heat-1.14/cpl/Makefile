@@ -26,7 +26,7 @@ $(HEAT_PAR): $(heat_SOURCES)
 	$(CHPL) -o $(HEAT_PAR) $(FLAGS) $(PAR_FLAGS) $(heat_SOURCES)
 
 $(HEAT_MUL): $(heat_SOURCES)
-	CHPL_COMM=gasnet $(CHPL) -o $(HEAT_MUL) $(FLAGS) $(MUL_FLAGS) $(heat_SOURCES)
+	CHPL_COMM_SUBSTRATE=ibv CHPL_COMM=gasnet $(CHPL) -o $(HEAT_MUL) $(FLAGS) $(MUL_FLAGS) $(heat_SOURCES)
 
 $(EXAMPLE_PAR): $(example_SOURCES)
 	$(CHPL) -o $(EXAMPLE_PAR) $(FLAGS) $(PAR_FLAGS) $(example_SOURCES)
