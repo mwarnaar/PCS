@@ -1,0 +1,9 @@
+main_imgdemo.o: ../../seq/main_imgdemo.c ../../seq/../src/output.h \
+ ../../seq/../src/input.h \
+ /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h
+
+../../seq/../src/output.h:
+
+../../seq/../src/input.h:
+
+/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h:

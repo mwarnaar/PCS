@@ -1,0 +1,12 @@
+main.o: ../../omp/../src/main.c ../../omp/../src/compute.h \
+ ../../omp/../src/input.h \
+ /cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h \
+ ../../omp/../src/output.h
+
+../../omp/../src/compute.h:
+
+../../omp/../src/input.h:
+
+/cm/shared/apps/gcc/4.4.6/lib/gcc/x86_64-unknown-linux-gnu/4.4.6/include/stddef.h:
+
+../../omp/../src/output.h:
