@@ -23,5 +23,5 @@ THREADS=8
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 5000 $THREADS 10
 
 #prun -v -1 -np 1 ./example_chpl --n=$1 --verbose=$2
-prun -v -1 -np 1 ./heat --Gc=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_100x150.pgm --Gt=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_100x150.pgm --Gi=50 --Gk=10
+prun -v -1 -np 1 ./heat --Gc=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_150x100.pgm --Gt=/home/mwr750/PCS2/heat-1.14/cpl/pattern1_150x100.pgm --Gi=10 --Gk=1
 #prun -v -1 -np 1 -native '-l gpu=GTX480' ./matmul_acc 100 $THREADS 10 

@@ -12,39 +12,50 @@ proc do_compute(p : params)
 	/* Start timer */
 	t.start();
 
+	/* Allocate grid data */
 	var height : int = p.N + 2;
-	var width : int = p.M + 2;
-
+	var width  : int = p.M + 2;
 	var srcMatrix: [0..height-1, 0..width-1] real;
 	var dstMatrix: [0..height-1, 0..width-1] real;
+
+	/* Allocate halo for conductivities */
 	var cndMatrix: [0..height-1, 0..width-1] real;
 
 	var c_cdir  : real = 0.25*sqrt(2)/(sqrt(2)+1.0);
 	var c_cdiag : real = 0.25/(sqrt(2)+1.0);
 
 	/* Set initial temperatures and conductivities */ 
-	for h in 1..height-1 {
-		for w in 1..width-1 {
-			srcMatrix(h, w) = p.tinit(h-1, w-1);
-			cndMatrix(h, w) = p.tcond(h-1, w-1);
+	for i in 1..height-1 {
+		for j in 1..width-1 {
+			dstMatrix[i, j] = p.tinit[i-1, j-1];
+			cndMatrix[i, j] = p.tcond[i-1, j-1];
 		}
 	}
 
 	/* Smear outermost row to border */
-	for w in 1..width-1 {
-		dstMatrix(0, w) = srcMatrix(1, w);
-		srcMatrix(0, w) = dstMatrix(0, w);
-		dstMatrix(height-1, w) = srcMatrix(height-2, w);
-		srcMatrix(height-1, w) = dstMatrix(height-1, w);
+	for j in 1..width-1 {
+		dstMatrix[0, j] = dstMatrix[1, j];
+		srcMatrix[0, j] = dstMatrix[1, j];
+		dstMatrix[height-1, j] = dstMatrix[height-2, j];
+		srcMatrix[height-1, j] = dstMatrix[height-2, j];
 	}
 
+	writeln("dst[0, 1] " + srcMatrix[0, 1]);
 	var maxdiff : real = 0.0;
 	/* Compute */
-	for i in 1..p.maxiter {
+	
+	for itr in 1..p.maxiter {
+
+		/* Copy dst to src */
+		for i in 1..height-1 {
+			for j in 1..width-1 {
+				srcMatrix[i, j] = dstMatrix[i, j];
+			}
+		}
 
 		/* Copy left and right column to opposite border */
 		for i in 0..height {
-			srcMatrix[i, width-1] = srcMatrix[i,1];
+			srcMatrix[i, width-1] = srcMatrix[i, 1];
 			srcMatrix[i, 0] = srcMatrix[i, width-2];
 		}
 
@@ -52,18 +63,18 @@ proc do_compute(p : params)
 
 		for i in 1..height-1 {
 			for j in 1..width-1 {
-				var width = cndMatrix[i, j];
-				var restw = 1.0 - width;
+				var width : real = cndMatrix[i, j];
+				var restw : real = 1.0 - width;
 
 				dstMatrix[i, j] = width * srcMatrix[i, j] +
 
 					(srcMatrix[i+1, j] + srcMatrix[i-1, j] +
 					 srcMatrix[i, j+1] + srcMatrix[i, j-1]) * (restw * c_cdir) +
 					(srcMatrix[i-1, j-1] + srcMatrix[i-1, j+1] +
-					 srcMatrix[i+1, j-1] + srcMatrix[i+1, j+1]) * (restw*c_cdiag);
+					 srcMatrix[i+1, j-1] + srcMatrix[i+1, j+1]) * (restw * c_cdiag);
 
 				/* Take absolute value of all differences in the two matrices */
-				var diff = srcMatrix[i, j] - dstMatrix[i, j];
+				var diff : real = srcMatrix[i, j] - dstMatrix[i, j];
 				if (diff < 0) {
 					diff = -diff;
 				}
@@ -75,19 +86,18 @@ proc do_compute(p : params)
 		
 		/* Check for convergence */
 		if (maxdiff < p.threshold) {
-			i = i+1;
+			itr = itr+1;
 			break;
 		}
 
 		/* Conditional reporting */
-		if (i % p.period == 0) {
-			/* Fill report */
+		if (itr % p.period == 0) {
 			var tmin: real =  INFINITY;
 			var tmax: real = -INFINITY;
 			var sum:  real = 0.0;
 
-			for i in 1..height {
-				for j in 1..width {
+			for i in 1..height-1 {
+				for j in 1..width-1 {
 					var v: real = dstMatrix[i, j];
 					sum += v;
 					if (v < tmin) {
@@ -99,7 +109,7 @@ proc do_compute(p : params)
 				}	
 			}
 			
-			r.niter = i;
+			r.niter = itr;
 			r.maxdiff = maxdiff;
 			r.tmin = tmin;
 			r.tmax = tmax;
@@ -108,12 +118,6 @@ proc do_compute(p : params)
 			report_results(p, r);
 		}
 		
-		/* Copy dst to src */
-		for i in 1..height {
-			for j in 1..width {
-				srcMatrix[i, j] = dstMatrix[i, j];
-			}
-		}
 	}
 	/* Stop timer, set final timing */
 	t.stop();
